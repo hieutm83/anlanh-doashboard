@@ -36,5 +36,6 @@ File được parse trong Web Worker, preview và validate trước khi gửi. F
 - KPI đọc từ `dashboard_daily`, không scan toàn bộ order/ads mỗi lượt mở trang.
 - RPC nhận khoảng ngày và kênh.
 - Chi tiết dùng cursor pagination, tối đa 200 dòng/request.
-- Aggregate chỉ rebuild các ngày bị import ảnh hưởng.
+- Migration `004_incremental_precompute.sql` xác định chính xác ngày cũ và ngày mới bị import ảnh hưởng, rồi chỉ upsert aggregate của các ngày đó.
+- TanStack Query cache mỗi tổ hợp tab/khoảng ngày/bộ lọc trong 5 phút và tự invalidate sau khi `finalize_import` hoàn tất.
 - RLS giới hạn dữ liệu theo organization.

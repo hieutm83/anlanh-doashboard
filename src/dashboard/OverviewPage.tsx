@@ -11,7 +11,8 @@ const startDate = new Date(today); startDate.setDate(today.getDate() - 29);
 
 export function OverviewPage() {
   const [filters, setFilters] = useState<DashboardFilters>({ from: startDate.toISOString().slice(0, 10), to: end, channel: 'all' });
-  const query = useQuery({ queryKey: ['overview', filters], queryFn: () => getOverview(filters), staleTime: 5 * 60_000 });
+  // Every filter belongs in the key. Revisiting a range within five minutes is a 0-request cache hit.
+  const query = useQuery({ queryKey: ['dashboard', 'overview', filters], queryFn: () => getOverview(filters), staleTime: 5 * 60_000 });
   return <>
     <header className="page-heading"><div><p>Tổng quan hoạt động</p><h1>Dashboard kinh doanh</h1></div><DateFilter value={filters} onChange={setFilters} /></header>
     {query.isLoading && <div className="state">Đang tải KPI đã tổng hợp…</div>}
