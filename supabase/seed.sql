@@ -1,0 +1,5 @@
+-- Chạy sau khi đã tạo user trong Supabase Auth.
+-- Thay hai UUID trước khi chạy.
+-- insert into public.organizations(id,name) values ('00000000-0000-0000-0000-000000000001','My Organization');
+-- insert into public.organization_members(organization_id,user_id,role)
+-- values ('00000000-0000-0000-0000-000000000001','AUTH_USER_UUID','admin');
