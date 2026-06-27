@@ -12,13 +12,21 @@ export function ImportPage() {
   const [parsed, setParsed] = useState<ParseResult | null>(null);
   const [status, setStatus] = useState('');
   const [progress, setProgress] = useState(0);
+  const readableError = (error: unknown) => {
+    if (error instanceof Error) return error.message;
+    if (error && typeof error === 'object') {
+      const value = error as { message?: string; details?: string; hint?: string; code?: string };
+      return [value.message, value.details, value.hint, value.code].filter(Boolean).join(' · ') || JSON.stringify(error);
+    }
+    return String(error);
+  };
   const importMutation = useMutation({
     mutationFn: async () => {
       if (!file || !parsed) throw new Error('Chưa có dữ liệu để import.');
       return coordinateImport(queryClient, { file, datasetType: type, rows: parsed.rows, onProgress: setProgress });
     },
     onSuccess: () => setStatus('Dữ liệu đã được cập nhật, tính toán và làm mới cache dashboard.'),
-    onError: (error) => setStatus(`Import thất bại: ${error instanceof Error ? error.message : String(error)}`),
+    onError: (error) => setStatus(`Import thất bại: ${readableError(error)}`),
   });
   const parse = (next: File) => {
     setFile(next); setStatus('Đang đọc file trong Web Worker…'); setParsed(null);

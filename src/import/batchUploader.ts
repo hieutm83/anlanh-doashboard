@@ -26,9 +26,11 @@ export async function uploadImport(file: File, datasetType: DatasetType, rows: I
       await sleep(500 * 2 ** attempt + Math.random() * 250);
     }
     if (lastError) throw lastError;
-    onProgress(Math.min(100, Math.round((start + payload.length) / rows.length * 100)));
+    // Reserve the last 5% for database finalization and aggregate refresh.
+    onProgress(Math.min(95, Math.round((start + payload.length) / rows.length * 95)));
   }
   const { error } = await supabase.rpc('finalize_import', { p_job_id: jobId });
   if (error) throw error;
+  onProgress(100);
   return jobId;
 }
