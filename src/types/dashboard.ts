@@ -13,7 +13,8 @@ export interface OverviewResult {
   adSpend: KpiValue;
   roas: KpiValue;
   customers: KpiValue;
-  series: Array<{ date: string; revenue: number; orders: number; adSpend: number }>;
+  series: Array<{ date: string; revenue: number; orders: number; cancelledOrders?: number; adSpend: number }>;
+  provinces?: Array<{ name: string; revenue: number }>;
 }
 
 export interface PageResult<T> {
