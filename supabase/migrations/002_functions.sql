@@ -28,9 +28,9 @@ begin
   if not public.can_edit(p_org) then raise exception 'Not authorized'; end if;
   delete from dashboard_daily where organization_id=p_org and metric_date between p_from and p_to;
   insert into dashboard_daily(organization_id,channel_id,metric_date,revenue,orders,customers,ad_spend,ad_revenue)
-  select organization_id,channel_id,day,sum(revenue),sum(order_count),sum(customer_count),sum(spend),sum(ad_revenue)
+  select organization_id,channel_id,metric_day,sum(revenue),sum(order_count),sum(customer_count),sum(spend),sum(ad_revenue)
   from (
-    select organization_id,channel_id,order_date day,sum(net_gmv) revenue,count(*) order_count,count(distinct nullif(customer_name,'')) customer_count,0::numeric spend,0::numeric ad_revenue
+    select organization_id,channel_id,order_date as metric_day,sum(net_gmv) revenue,count(*) order_count,count(distinct nullif(customer_name,'')) customer_count,0::numeric spend,0::numeric ad_revenue
     from orders where organization_id=p_org and order_date between p_from and p_to and not is_cancelled group by 1,2,3
     union all
     select organization_id,channel_id,metric_date,0,0,0,sum(spend),sum(revenue) from ad_performance_daily where organization_id=p_org and metric_date between p_from and p_to group by 1,2,3
