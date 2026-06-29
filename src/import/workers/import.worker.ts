@@ -71,6 +71,10 @@ function normalizeAd(raw: ImportRow, metricDate: string) {
     view_75_rate: percent(valueOf(raw, 'Tỷ lệ xem 75% thời lượng video quảng cáo')), view_100_rate: percent(valueOf(raw, 'Tỷ lệ xem 100% thời lượng video quảng cáo')), raw_payload: raw } as ImportRow;
 }
 
+function hasBillableAdActivity(row: ImportRow) {
+  return Number(row.spend ?? 0) !== 0 || Number(row.orders ?? 0) !== 0;
+}
+
 function productRows(matrix: unknown[][], metricDate: string) {
   const headerIndex = matrix.findIndex((row) => row.some((cell) => /Tên sản phẩm|ID sản phẩm/i.test(String(cell ?? ''))));
   if (headerIndex < 0) throw new Error('Không tìm thấy dòng tiêu đề sản phẩm.');
@@ -96,7 +100,8 @@ self.onmessage = async (event: MessageEvent<{ file: File; datasetType: DatasetTy
     const metricDate = dateFromFilename(file.name, datasetType);
     if ((datasetType === 'ads' || datasetType === 'product_analysis') && !metricDate) throw new Error(`Tên file không chứa ngày đúng định dạng cho ${datasetType}.`);
     const parsed = datasetType === 'product_analysis' ? productRows(matrix, metricDate) : matrixRows(matrix);
-    const rows = parsed.rows.map((row) => datasetType === 'orders' || datasetType === 'sample_orders' ? normalizeOrder(row) : datasetType === 'affiliate_orders' ? normalizeAffiliate(row) : datasetType === 'ads' ? normalizeAd(row, metricDate) : row);
+    const normalizedRows = parsed.rows.map((row) => datasetType === 'orders' || datasetType === 'sample_orders' ? normalizeOrder(row) : datasetType === 'affiliate_orders' ? normalizeAffiliate(row) : datasetType === 'ads' ? normalizeAd(row, metricDate) : row);
+    const rows = datasetType === 'ads' ? normalizedRows.filter(hasBillableAdActivity) : normalizedRows;
     const result: ParseResult = { headers: parsed.headers, rows, errors: [], totalRows: rows.length, metricDate };
     self.postMessage({ ok: true, result });
   } catch (error) { self.postMessage({ ok: false, error: error instanceof Error ? error.message : String(error) }); }
