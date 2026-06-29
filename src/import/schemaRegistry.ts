@@ -16,7 +16,9 @@ export function validateHeaders(type: DatasetType, _headers: string[], rows: Imp
 export function validateRows(rows: ImportRow[]): RowError[] {
   const errors: RowError[] = [];
   rows.forEach((row, index) => {
-    if (Object.values(row).every((value) => value == null || String(value).trim() === '')) errors.push({ row: index + 2, column: '*', message: 'Dòng trống' });
+    if (Object.values(row).every((value) => value == null || String(value).trim() === '')) {
+      errors.push({ row: index + 2, column: '*', message: 'Dòng trống' });
+    }
   });
   return errors;
 }
