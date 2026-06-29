@@ -5,7 +5,10 @@ import type { DatasetType, ImportRow, ParseResult } from '../types';
 const normalizedKey = (value: unknown) => String(value ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const valueOf = (row: ImportRow, ...names: string[]) => {
   const wanted = new Set(names.map(normalizedKey));
-  const found = Object.entries(row).find(([name]) => wanted.has(normalizedKey(name)));
+  const found = Object.entries(row).find(([name]) => {
+    const key = normalizedKey(name);
+    return [...wanted].some((item) => key === item || key.endsWith(` ${item}`));
+  });
   if (found) return found[1];
   if (wanted.has(normalizedKey('Số lượt hiển thị quảng cáo sản phẩm'))) return Object.values(row)[15] ?? null;
   return null;
@@ -82,7 +85,11 @@ function hasBillableAdActivity(row: ImportRow) {
 }
 
 function productRows(matrix: unknown[][], metricDate: string) {
-  const headerIndex = matrix.findIndex((row) => row.some((cell) => /Tên sản phẩm|ID sản phẩm/i.test(String(cell ?? ''))));
+  const isProductHeader = (cell: unknown) => {
+    const key = normalizedKey(cell);
+    return key.includes('ten san pham') || key.includes('id san pham') || key.includes('product name') || key.includes('product id');
+  };
+  const headerIndex = matrix.findIndex((row) => row.filter(isProductHeader).length >= 1);
   if (headerIndex < 0) throw new Error('Không tìm thấy dòng tiêu đề sản phẩm.');
   const groupRow = matrix[Math.max(0, headerIndex - 1)] ?? [];
   const headerRow = matrix[headerIndex] ?? [];
@@ -91,10 +98,20 @@ function productRows(matrix: unknown[][], metricDate: string) {
     const field = String(header ?? '').trim() || `column_${index + 1}`;
     return group && group !== 'Tất cả' ? `${group} > ${field}` : field;
   });
-  return { headers: keys, rows: matrix.slice(headerIndex + 1).filter((row) => row.some((value) => String(value ?? '').trim())).map((values) => {
+  const productIdIndex = keys.findIndex((key) => ['id san pham', 'product id'].some((term) => normalizedKey(key).includes(term)));
+  const productNameIndex = keys.findIndex((key) => ['ten san pham', 'product name'].some((term) => normalizedKey(key).includes(term)));
+  const productStatusIndex = keys.findIndex((key) => ['trang thai san pham', 'product status'].some((term) => normalizedKey(key).includes(term)));
+  const rows = matrix.slice(headerIndex + 1).filter((row) => row.some((value) => String(value ?? '').trim())).map((values) => {
     const raw = Object.fromEntries(keys.map((field, index) => [field, values[index] == null ? null : String(values[index]).trim()])) as ImportRow;
-    return { metric_date: metricDate, product_external_id: String(valueOf(raw, 'ID sản phẩm') ?? ''), product_name: String(valueOf(raw, 'Tên sản phẩm') ?? ''), product_status: String(valueOf(raw, 'Trạng thái sản phẩm') ?? ''), raw_payload: raw } as ImportRow;
-  }) };
+    return {
+      metric_date: metricDate,
+      product_external_id: String(valueOf(raw, 'ID sản phẩm') ?? (productIdIndex >= 0 ? values[productIdIndex] : '') ?? ''),
+      product_name: String(valueOf(raw, 'Tên sản phẩm') ?? (productNameIndex >= 0 ? values[productNameIndex] : '') ?? ''),
+      product_status: String(valueOf(raw, 'Trạng thái sản phẩm') ?? (productStatusIndex >= 0 ? values[productStatusIndex] : '') ?? ''),
+      raw_payload: raw
+    } as ImportRow;
+  }).filter((row) => String(row.product_name ?? '').trim());
+  return { headers: keys, rows };
 }
 
 self.onmessage = async (event: MessageEvent<{ file: File; datasetType: DatasetType }>) => {
