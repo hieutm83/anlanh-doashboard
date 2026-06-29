@@ -93,10 +93,16 @@ function productRows(matrix: unknown[][], metricDate: string) {
   if (headerIndex < 0) throw new Error('Không tìm thấy dòng tiêu đề sản phẩm.');
   const groupRow = matrix[Math.max(0, headerIndex - 1)] ?? [];
   const headerRow = matrix[headerIndex] ?? [];
-  const keys = headerRow.map((header, index) => {
+  let activeGroup = '';
+  const groups = headerRow.map((_, index) => {
     const group = String(groupRow[index] ?? '').trim();
+    if (group) activeGroup = group;
+    return activeGroup;
+  });
+  const keys = headerRow.map((header, index) => {
+    const group = groups[index];
     const field = String(header ?? '').trim() || `column_${index + 1}`;
-    return group && group !== 'Tất cả' ? `${group} > ${field}` : field;
+    return group ? `${group} > ${field}` : field;
   });
   const productIdIndex = keys.findIndex((key) => ['id san pham', 'product id'].some((term) => normalizedKey(key).includes(term)));
   const productNameIndex = keys.findIndex((key) => {
