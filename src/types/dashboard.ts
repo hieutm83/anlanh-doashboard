@@ -13,7 +13,8 @@ export interface OverviewResult {
   adSpend: KpiValue;
   roas: KpiValue;
   customers: KpiValue;
-  series: Array<{ date: string; revenue: number; orders: number; cancelledOrders?: number; adSpend: number }>;
+  repeatRate: KpiValue;
+  series: Array<{ date: string; revenue: number; orders: number; cancelledOrders?: number; adSpend: number; newCustomers?: number; repeatCustomers?: number }>;
   provinces?: Array<{ name: string; revenue: number }>;
 }
 

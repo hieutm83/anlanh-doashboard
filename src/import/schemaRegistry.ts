@@ -1,24 +1,22 @@
 import type { DatasetType, ImportRow, RowError } from './types';
 
-const schemas: Record<DatasetType, { required: string[][] }> = {
-  orders: { required: [['order_id', 'order id', 'mã đơn hàng'], ['ordered_at', 'created time', 'thời gian tạo']] },
-  ads: { required: [['date', 'ngày'], ['spend', 'cost', 'chi phí']] },
-  products: { required: [['product_id', 'id sản phẩm', 'product name', 'tên sản phẩm']] },
-  creator_performance: { required: [['creator', 'creator name', 'tên nhà sáng tạo']] },
-  videos: { required: [['video_id', 'video id', 'video link']] },
-  traffic: { required: [['date', 'ngày'], ['source', 'nguồn lưu lượng']] },
+const schemas: Record<DatasetType, string[]> = {
+  orders: ['order_id', 'ordered_at'],
+  sample_orders: ['order_id', 'ordered_at'],
+  affiliate_orders: ['order_id', 'created_at'],
+  ads: ['metric_date', 'campaign_id', 'product_external_id'],
+  product_analysis: ['metric_date', 'product_name'],
 };
 
-const normalized = (value: string) => value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-export function validateHeaders(type: DatasetType, headers: string[]) {
-  const keys = headers.map(normalized);
-  return schemas[type].required.filter((aliases) => !aliases.some((alias) => keys.includes(normalized(alias)))).map((aliases) => aliases[0]);
+export function validateHeaders(type: DatasetType, _headers: string[], rows: ImportRow[] = []) {
+  if (!rows.length) return ['data'];
+  return schemas[type].filter((field) => !rows.some((row) => row[field] !== null && row[field] !== undefined && String(row[field]).trim() !== ''));
 }
 
-export function validateRows(rows: ImportRow[], headers: string[]): RowError[] {
+export function validateRows(rows: ImportRow[]): RowError[] {
   const errors: RowError[] = [];
   rows.forEach((row, index) => {
-    if (headers.every((header) => row[header] == null || String(row[header]).trim() === '')) errors.push({ row: index + 2, column: '*', message: 'Dòng trống' });
+    if (Object.values(row).every((value) => value == null || String(value).trim() === '')) errors.push({ row: index + 2, column: '*', message: 'Dòng trống' });
   });
   return errors;
 }
