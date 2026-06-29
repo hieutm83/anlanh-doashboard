@@ -89,7 +89,7 @@ function productRows(matrix: unknown[][], metricDate: string) {
     const key = normalizedKey(cell);
     return key.includes('ten san pham') || key.includes('id san pham') || key.includes('product name') || key.includes('product id');
   };
-  const headerIndex = matrix.findIndex((row) => row.filter(isProductHeader).length >= 1);
+  const headerIndex = matrix.findIndex((row) => row.filter(isProductHeader).length >= 1 && row.some((cell) => normalizedKey(cell) === 'ten'));
   if (headerIndex < 0) throw new Error('Không tìm thấy dòng tiêu đề sản phẩm.');
   const groupRow = matrix[Math.max(0, headerIndex - 1)] ?? [];
   const headerRow = matrix[headerIndex] ?? [];
@@ -99,7 +99,10 @@ function productRows(matrix: unknown[][], metricDate: string) {
     return group && group !== 'Tất cả' ? `${group} > ${field}` : field;
   });
   const productIdIndex = keys.findIndex((key) => ['id san pham', 'product id'].some((term) => normalizedKey(key).includes(term)));
-  const productNameIndex = keys.findIndex((key) => ['ten san pham', 'product name'].some((term) => normalizedKey(key).includes(term)));
+  const productNameIndex = keys.findIndex((key) => {
+    const normalized = normalizedKey(key);
+    return ['ten san pham', 'product name'].some((term) => normalized.includes(term)) || normalized === 'ten' || normalized.endsWith(' ten');
+  });
   const productStatusIndex = keys.findIndex((key) => ['trang thai san pham', 'product status'].some((term) => normalizedKey(key).includes(term)));
   const rows = matrix.slice(headerIndex + 1).filter((row) => row.some((value) => String(value ?? '').trim())).map((values) => {
     const raw = Object.fromEntries(keys.map((field, index) => [field, values[index] == null ? null : String(values[index]).trim()])) as ImportRow;
