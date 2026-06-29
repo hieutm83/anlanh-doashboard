@@ -1,4 +1,4 @@
--- Keep ads imports lean and ignore placeholder posted_at values such as "-".
+-- Keep ads imports lean: only write rows whose column P/impressions value is greater than 0.
 create or replace function public.finalize_ads_import(p_job_id uuid) returns void language plpgsql security definer set search_path=public as $$
 declare j import_jobs%rowtype; dates date[];
 begin

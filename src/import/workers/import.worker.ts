@@ -6,7 +6,9 @@ const normalizedKey = (value: unknown) => String(value ?? '').trim().toLowerCase
 const valueOf = (row: ImportRow, ...names: string[]) => {
   const wanted = new Set(names.map(normalizedKey));
   const found = Object.entries(row).find(([name]) => wanted.has(normalizedKey(name)));
-  return found?.[1] ?? null;
+  if (found) return found[1];
+  if (wanted.has(normalizedKey('Số lượt hiển thị quảng cáo sản phẩm'))) return Object.values(row)[15] ?? null;
+  return null;
 };
 const columnValue = (row: ImportRow, zeroBasedIndex: number) => Object.values(row)[zeroBasedIndex] ?? null;
 const numeric = (value: unknown) => {
@@ -76,7 +78,7 @@ function normalizeAd(raw: ImportRow, metricDate: string) {
 }
 
 function hasBillableAdActivity(row: ImportRow) {
-  return Number(row.spend ?? 0) > 0 || Number(row.orders ?? 0) > 0;
+  return numeric(columnValue(row, 15)) > 0;
 }
 
 function productRows(matrix: unknown[][], metricDate: string) {
