@@ -3,6 +3,8 @@
 -- organizations, organization_members, channels, product_mappings, sku_mappings,
 -- account_mappings, and inhouse_accounts.
 -- Run in Supabase SQL Editor with role postgres/project owner.
+-- Storage files are not deleted here because Supabase blocks direct deletes
+-- from storage.objects; old import files can be removed later via Storage UI/API.
 
 begin;
 
@@ -32,7 +34,6 @@ truncate table
   public.traffic_performance_daily
 restart identity cascade;
 
-delete from storage.objects where bucket_id = 'imports';
 delete from public.import_jobs;
 
 commit;
