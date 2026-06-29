@@ -8,6 +8,7 @@ const valueOf = (row: ImportRow, ...names: string[]) => {
   const found = Object.entries(row).find(([name]) => wanted.has(normalizedKey(name)));
   return found?.[1] ?? null;
 };
+const columnValue = (row: ImportRow, zeroBasedIndex: number) => Object.values(row)[zeroBasedIndex] ?? null;
 const numeric = (value: unknown) => {
   const text = String(value ?? '').trim().replace(/₫/g, '').replace(/\s/g, '');
   if (!text) return 0;
@@ -18,6 +19,7 @@ const numeric = (value: unknown) => {
 const percent = (value: unknown) => numeric(value) / (String(value ?? '').includes('%') ? 100 : 1);
 const isoDate = (value: unknown) => {
   const text = String(value ?? '').trim();
+  if (!text || text === '-' || text === '--') return null;
   let match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}):(\d{2}))?/);
   if (match) return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}T${(match[4] ?? '00').padStart(2, '0')}:${match[5] ?? '00'}:${match[6] ?? '00'}+07:00`;
   match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
@@ -59,16 +61,22 @@ function normalizeAffiliate(raw: ImportRow) {
 }
 
 function normalizeAd(raw: ImportRow, metricDate: string) {
+  const spend = numeric(columnValue(raw, 10));
+  const orders = numeric(columnValue(raw, 11));
   return { ...raw, metric_date: metricDate, campaign_name: String(valueOf(raw, 'Tên chiến dịch') ?? ''), campaign_id: String(valueOf(raw, 'ID chiến dịch') ?? ''),
     product_external_id: String(valueOf(raw, 'ID sản phẩm') ?? ''), creative_type: String(valueOf(raw, 'Loại nội dung sáng tạo') ?? ''), video_title: String(valueOf(raw, 'Tiêu đề video') ?? ''),
     video_id: String(valueOf(raw, 'ID video') ?? ''), account_name: String(valueOf(raw, 'Tài khoản TikTok') ?? ''), posted_at: isoDate(valueOf(raw, 'Thời gian đăng')),
-    status: String(valueOf(raw, 'Trạng thái') ?? ''), authorization_type: String(valueOf(raw, 'Loại ủy quyền') ?? ''), spend: numeric(valueOf(raw, 'Chi phí')),
-    orders: numeric(valueOf(raw, 'Số lượng đơn hàng SKU')), cpa: numeric(valueOf(raw, 'Chi phí cho mỗi đơn hàng')), revenue: numeric(valueOf(raw, 'Doanh thu gộp')), roi: numeric(valueOf(raw, 'ROI')),
+    status: String(valueOf(raw, 'Trạng thái') ?? ''), authorization_type: String(valueOf(raw, 'Loại ủy quyền') ?? ''), spend,
+    orders, cpa: numeric(valueOf(raw, 'Chi phí cho mỗi đơn hàng')), revenue: numeric(valueOf(raw, 'Doanh thu gộp')), roi: numeric(valueOf(raw, 'ROI')),
     impressions: numeric(valueOf(raw, 'Số lượt hiển thị quảng cáo sản phẩm')), clicks: numeric(valueOf(raw, 'Số lượt nhấp vào quảng cáo sản phẩm')),
     ctr: percent(valueOf(raw, 'Tỷ lệ nhấp vào quảng cáo sản phẩm')), conversion_rate: percent(valueOf(raw, 'Tỷ lệ chuyển đổi quảng cáo')),
     view_2s_rate: percent(valueOf(raw, 'Tỷ lệ xem video quảng cáo trong 2 giây')), view_6s_rate: percent(valueOf(raw, 'Tỷ lệ xem video quảng cáo trong 6 giây')),
     view_25_rate: percent(valueOf(raw, 'Tỷ lệ xem 25% thời lượng video quảng cáo')), view_50_rate: percent(valueOf(raw, 'Tỷ lệ xem 50% thời lượng video quảng cáo')),
     view_75_rate: percent(valueOf(raw, 'Tỷ lệ xem 75% thời lượng video quảng cáo')), view_100_rate: percent(valueOf(raw, 'Tỷ lệ xem 100% thời lượng video quảng cáo')), raw_payload: raw } as ImportRow;
+}
+
+function hasBillableAdActivity(row: ImportRow) {
+  return Number(row.spend ?? 0) > 0 || Number(row.orders ?? 0) > 0;
 }
 
 function productRows(matrix: unknown[][], metricDate: string) {
@@ -96,7 +104,8 @@ self.onmessage = async (event: MessageEvent<{ file: File; datasetType: DatasetTy
     const metricDate = dateFromFilename(file.name, datasetType);
     if ((datasetType === 'ads' || datasetType === 'product_analysis') && !metricDate) throw new Error(`Tên file không chứa ngày đúng định dạng cho ${datasetType}.`);
     const parsed = datasetType === 'product_analysis' ? productRows(matrix, metricDate) : matrixRows(matrix);
-    const rows = parsed.rows.map((row) => datasetType === 'orders' || datasetType === 'sample_orders' ? normalizeOrder(row) : datasetType === 'affiliate_orders' ? normalizeAffiliate(row) : datasetType === 'ads' ? normalizeAd(row, metricDate) : row);
+    const normalizedRows = parsed.rows.map((row) => datasetType === 'orders' || datasetType === 'sample_orders' ? normalizeOrder(row) : datasetType === 'affiliate_orders' ? normalizeAffiliate(row) : datasetType === 'ads' ? normalizeAd(row, metricDate) : row);
+    const rows = datasetType === 'ads' ? normalizedRows.filter(hasBillableAdActivity) : normalizedRows;
     const result: ParseResult = { headers: parsed.headers, rows, errors: [], totalRows: rows.length, metricDate };
     self.postMessage({ ok: true, result });
   } catch (error) { self.postMessage({ ok: false, error: error instanceof Error ? error.message : String(error) }); }
