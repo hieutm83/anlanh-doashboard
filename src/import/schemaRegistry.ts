@@ -5,7 +5,7 @@ const schemas: Record<DatasetType, string[]> = {
   sample_orders: ['order_id', 'ordered_at'],
   affiliate_orders: ['order_id', 'created_at'],
   ads: ['metric_date', 'campaign_id', 'product_external_id'],
-  product_analysis: ['metric_date', 'product_name'],
+  product_analysis: ['metric_date'],
 };
 
 export function validateHeaders(type: DatasetType, _headers: string[], rows: ImportRow[] = []) {

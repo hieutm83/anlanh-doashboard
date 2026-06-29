@@ -103,14 +103,16 @@ function productRows(matrix: unknown[][], metricDate: string) {
   const productStatusIndex = keys.findIndex((key) => ['trang thai san pham', 'product status'].some((term) => normalizedKey(key).includes(term)));
   const rows = matrix.slice(headerIndex + 1).filter((row) => row.some((value) => String(value ?? '').trim())).map((values) => {
     const raw = Object.fromEntries(keys.map((field, index) => [field, values[index] == null ? null : String(values[index]).trim()])) as ImportRow;
+    const productId = String(valueOf(raw, 'ID sản phẩm') ?? (productIdIndex >= 0 ? values[productIdIndex] : '') ?? '').trim();
+    const productName = String(valueOf(raw, 'Tên sản phẩm') ?? (productNameIndex >= 0 ? values[productNameIndex] : '') ?? productId ?? values.find((value) => String(value ?? '').trim()) ?? '').trim();
     return {
       metric_date: metricDate,
-      product_external_id: String(valueOf(raw, 'ID sản phẩm') ?? (productIdIndex >= 0 ? values[productIdIndex] : '') ?? ''),
-      product_name: String(valueOf(raw, 'Tên sản phẩm') ?? (productNameIndex >= 0 ? values[productNameIndex] : '') ?? ''),
+      product_external_id: productId || (productName ? `name:${productName}` : ''),
+      product_name: productName || productId,
       product_status: String(valueOf(raw, 'Trạng thái sản phẩm') ?? (productStatusIndex >= 0 ? values[productStatusIndex] : '') ?? ''),
       raw_payload: raw
     } as ImportRow;
-  }).filter((row) => String(row.product_name ?? '').trim());
+  }).filter((row) => String(row.product_name ?? '').trim() || String(row.product_external_id ?? '').trim());
   return { headers: keys, rows };
 }
 
