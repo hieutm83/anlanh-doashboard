@@ -36,8 +36,8 @@ export function ImportPage() {
     worker.onmessage = ({ data }) => {
       if (!data.ok) return setStatus(`Lỗi: ${data.error}`);
       const result = data.result as ParseResult;
-      const missing = validateHeaders(type, result.headers);
-      result.errors = [...missing.map((column) => ({ row: 1, column, message: 'Thiếu cột bắt buộc' })), ...validateRows(result.rows, result.headers)];
+      const missing = validateHeaders(type, result.headers, result.rows);
+      result.errors = [...missing.map((column) => ({ row: 1, column, message: 'Thiếu cột bắt buộc' })), ...validateRows(result.rows)];
       setParsed(result); setStatus(missing.length ? 'Cấu trúc file chưa hợp lệ.' : 'File đã sẵn sàng để import.');
     };
     worker.postMessage({ file: next, datasetType: type });
@@ -48,7 +48,7 @@ export function ImportPage() {
     importMutation.mutate();
   };
   return <section><header className="page-heading"><div><p>DATA PIPELINE</p><h1>Nhập dữ liệu</h1></div></header>
-    <div className="import-grid"><article className="panel"><h2>1. Chọn nguồn dữ liệu</h2><label>Loại dữ liệu<select value={type} onChange={(e) => setType(e.target.value as DatasetType)}><option value="orders">Đơn hàng</option><option value="ads">Quảng cáo</option><option value="products">Sản phẩm</option><option value="creator_performance">KOC Performance</option><option value="videos">Video</option><option value="traffic">Traffic</option></select></label><label className="drop-zone">CSV, XLSX hoặc XLS<input type="file" accept=".csv,.xlsx,.xls" onChange={(e) => e.target.files?.[0] && parse(e.target.files[0])} /></label><p>{status}</p>{progress > 0 && <progress value={progress} max="100" />}</article>
+    <div className="import-grid"><article className="panel"><h2>1. Chọn nguồn dữ liệu</h2><label>Loại dữ liệu<select value={type} onChange={(e) => setType(e.target.value as DatasetType)}><option value="orders">Tất cả đơn hàng</option><option value="sample_orders">Đơn mẫu KOC</option><option value="affiliate_orders">Đơn hàng Affiliate/KOC</option><option value="ads">Quảng cáo TikTok</option><option value="product_analysis">Phân tích sản phẩm</option></select></label><label className="drop-zone">CSV, XLSX hoặc XLS<input type="file" accept=".csv,.xlsx,.xls" onChange={(e) => e.target.files?.[0] && parse(e.target.files[0])} /></label><p className="field-note">Ads lấy ngày từ tên “creative data for product campaigns YYYY-MM-DD 00 ~ YYYY-MM-DD 23”. Sản phẩm lấy ngày từ “product_list_YYYYMMDD”.</p><p>{status}</p>{progress > 0 && <progress value={progress} max="100" />}</article>
       <article className="panel"><h2>2. Kiểm tra và xác nhận</h2>{parsed ? <><div className="summary"><b>{parsed.totalRows.toLocaleString('vi-VN')}</b> dòng · <b>{parsed.errors.length}</b> lỗi</div>{parsed.errors.length > 0 && <ul className="errors">{parsed.errors.slice(0, 20).map((error, i) => <li key={i}>Dòng {error.row}, {error.column}: {error.message}</li>)}</ul>}<div className="preview"><table><thead><tr>{parsed.headers.slice(0, 8).map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{parsed.rows.slice(0, 10).map((row, i) => <tr key={i}>{parsed.headers.slice(0, 8).map((h) => <td key={h}>{String(row[h] ?? '')}</td>)}</tr>)}</tbody></table></div><button disabled={parsed.errors.length > 0 || importMutation.isPending || progress === 100} onClick={confirm}>{importMutation.isPending ? 'Đang tính toán…' : 'Xác nhận import'}</button></> : <p>Chọn file để xem preview. Dữ liệu chưa được gửi lên server ở bước này.</p>}</article></div>
   </section>;
 }
