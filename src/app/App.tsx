@@ -4,6 +4,7 @@ import { env } from '../config/env';
 import { useAuth } from '../auth/AuthProvider';
 import { LoginPage } from '../auth/LoginPage';
 import { OverviewPage } from '../dashboard/OverviewPage';
+import { SectionPage } from '../dashboard/SectionPage';
 import { ImportPage } from '../import/ImportPage';
 import { supabase } from '../database/supabase';
 import { getCurrentRole } from '../api/accountApi';
@@ -35,9 +36,10 @@ export default function App() {
   if (!session) return <LoginPage />;
   const isStaff = role.data === 'admin' || role.data === 'editor';
   const visibleMenu = menu.filter((group) => !group.staffOnly || isStaff);
+  const current = visibleMenu.flatMap((group) => group.items).find((item) => item.id === page);
   return <div className="app-shell"><aside className="sidebar">
     <div className="app-logo">MINHHIEU<small>Dashboard · AnlanhFarm</small></div><div className="menu-caption">MENU</div>
     <nav>{visibleMenu.map((group) => <section className="nav-group" key={group.label}><h3><MenuIcon name={group.icon}/>{group.label}</h3><div>{group.items.map((item) => <button className={page === item.id ? 'active' : ''} onClick={() => setPage(item.id)} key={item.id}>{item.label}</button>)}</div></section>)}</nav>
     <button className="sign-out" onClick={() => supabase.auth.signOut()}>Đăng xuất</button>
-  </aside><main className="content">{page === 'overview' ? <OverviewPage /> : page === 'import' && isStaff ? <ImportPage /> : <section className="state"><h2>{visibleMenu.flatMap((x) => x.items).find((x) => x.id === page)?.label}</h2><p>Dashboard đang được kết nối với aggregate API tương ứng.</p></section>}</main></div>;
+  </aside><main className="content">{page === 'overview' ? <OverviewPage /> : page === 'import' && isStaff ? <ImportPage /> : current ? <SectionPage section={page} title={current.label}/> : null}</main></div>;
 }

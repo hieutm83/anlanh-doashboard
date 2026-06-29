@@ -71,3 +71,6 @@ Tài liệu này là chuẩn đối chiếu khi chuyển các dashboard sang Pos
 - KPI tỷ lệ phải tính từ tổng tử số/tổng mẫu số, không cộng hoặc trung bình tỷ lệ tùy tiện.
 - Current/previous dùng hai khoảng có cùng số ngày, kỳ trước kết thúc ngay trước kỳ hiện tại.
 - Aggregate chỉ rebuild các ngày bị import ảnh hưởng.
+- Import lại là thao tác thay thế snapshot, không phải cộng dồn: đơn hàng thay thế theo `Order ID`; Affiliate thay thế các dòng thuộc `Order ID` có trong file; Ads và Phân tích sản phẩm thay thế toàn bộ ngày lấy từ tên file.
+- Mọi tab chỉ gọi RPC tổng hợp theo khoảng ngày. Frontend không tải toàn bộ bảng fact để tự `GROUP BY`.
+- Các tab Cửa hàng (`Doanh thu`, `Sản phẩm`, `Nguồn`, `Chi phí`) cùng đọc từ `orders`/`order_items`; Ads và Affiliate chỉ bổ sung các thành phần chi phí hoặc phân loại nguồn tương ứng.
