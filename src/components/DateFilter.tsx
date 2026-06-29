@@ -14,12 +14,13 @@ export function DateFilter({ value, onChange }: { value: DashboardFilters; onCha
   const [open, setOpen] = useState(false); const [custom, setCustom] = useState(false); const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { const close = (event: MouseEvent) => { if (!ref.current?.contains(event.target as Node)) setOpen(false); }; document.addEventListener('mousedown', close); return () => document.removeEventListener('mousedown', close); }, []);
   const choose = (range: { from: string; to: string }) => { onChange({ ...value, ...range }); setOpen(false); setCustom(false); };
+  const active=(range:{from:string;to:string})=>value.from===range.from&&value.to===range.to?'selected':'';
   const month = (offset: number) => { const now = new Date(); const from = new Date(now.getFullYear(), now.getMonth() + offset, 1); const to = offset === 0 ? now : new Date(now.getFullYear(), now.getMonth(), 0); choose({ from: iso(from), to: iso(to) }); };
   return <div className="date-picker" ref={ref}>
     <button className="date-trigger" onClick={() => setOpen(!open)}><span>▣</span>{display(value.from)} - {display(value.to)}<b>⌄</b></button>
     {open && <div className="date-popover">
-      <button onClick={() => choose(yesterday())}>Hôm qua</button><button className="selected" onClick={() => choose(preset(7))}>7 ngày qua</button>
-      <button onClick={() => choose(preset(30))}>30 ngày qua</button><button onClick={() => month(0)}>Tháng này</button><button onClick={() => month(-1)}>Tháng trước</button>
+      <button className={active(yesterday())} onClick={() => choose(yesterday())}>Hôm qua</button><button className={active(preset(7))} onClick={() => choose(preset(7))}>7 ngày qua</button>
+      <button className={active(preset(30))} onClick={() => choose(preset(30))}>30 ngày qua</button><button onClick={() => month(0)}>Tháng này</button><button onClick={() => month(-1)}>Tháng trước</button>
       <button className="custom-toggle" onClick={() => setCustom(!custom)}>Tùy chỉnh</button>
       {custom && <div className="custom-range"><label>Từ ngày<input type="date" value={value.from} max={value.to} onChange={(e) => onChange({ ...value, from: e.target.value })}/></label><label>Đến ngày<input type="date" value={value.to} min={value.from} onChange={(e) => onChange({ ...value, to: e.target.value })}/></label><button onClick={() => setOpen(false)}>Áp dụng</button></div>}
     </div>}

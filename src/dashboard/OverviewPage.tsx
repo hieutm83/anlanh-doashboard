@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { ChartConfiguration } from 'chart.js';
-import { getOverview } from '../api/dashboardApi';
+import { getDashboardSection, getOverview } from '../api/dashboardApi';
 import { KpiCard } from '../components/KpiCard';
 import { DateFilter, defaultRange } from '../components/DateFilter';
 import { DashboardChart } from '../components/DashboardChart';
@@ -12,6 +12,7 @@ const common = { responsive: true, maintainAspectRatio: false, plugins: { legend
 export function OverviewPage() {
   const [filters, setFilters] = useState<DashboardFilters>(defaultRange);
   const query = useQuery({ queryKey: ['dashboard', 'overview', filters], queryFn: () => getOverview(filters), staleTime: 5 * 60_000 });
+  const products = useQuery({ queryKey: ['dashboard', 'overview-products', filters], queryFn: () => getDashboardSection('products', filters), staleTime: 5 * 60_000 });
   const charts = useMemo(() => {
     const rows = query.data?.series ?? [];
     const labels = rows.map((x) => x.date.slice(8, 10) + '/' + x.date.slice(5, 7));
@@ -36,6 +37,7 @@ export function OverviewPage() {
     {query.error && <div className="state error">Không thể tải dữ liệu: {query.error.message}</div>}
     {query.data && <><section className="kpi-grid four"><KpiCard label="TỔNG GMV" kpi={query.data.revenue} currency /><KpiCard label="TỔNG ĐƠN HÀNG" kpi={query.data.orders} /><KpiCard label="AOV" kpi={{ value: query.data.orders.value ? query.data.revenue.value / query.data.orders.value : 0, previous: query.data.orders.previous ? query.data.revenue.previous / query.data.orders.previous : 0, changePct: null }} currency /><KpiCard label="TỈ LỆ KHÁCH MUA LẠI" kpi={query.data.repeatRate} /></section>
       <section className="chart-grid"><article className="chart-card"><h2>Số lượng đơn, đơn hủy và GMV</h2><DashboardChart config={charts.revenueOrders} /></article><article className="chart-card"><h2>AOV theo thời gian</h2><DashboardChart config={charts.aov} /></article><article className="chart-card"><h2>Khách cũ và khách mới</h2><DashboardChart config={charts.customers} /></article><article className="chart-card"><h2>Doanh thu theo Tỉnh/Thành phố (Top 10)</h2><DashboardChart config={charts.province} /></article></section>
+      {['GMV Theo Sản Phẩm','GMV Theo Phân Loại (SKU)'].map((title) => <article className="legacy-table-card" key={title}><h2>{title}</h2><div className="legacy-table-scroll"><table><thead><tr><th>Sản phẩm</th><th>Tổng đơn</th><th>GMV</th><th>AOV</th><th>Tỷ lệ GMV</th></tr></thead><tbody>{(products.data?.rows ?? []).map((row,index) => { const revenue=Number(row.revenue??0); const orders=Number(row.orders??0); return <tr key={index}><td>{String(row.label??'—')}</td><td>{orders.toLocaleString('vi-VN')}</td><td>{revenue.toLocaleString('vi-VN')} ₫</td><td>{(orders?revenue/orders:0).toLocaleString('vi-VN')} ₫</td><td>{query.data?.revenue.value ? (revenue*100/query.data.revenue.value).toFixed(2) : '0'}%</td></tr>})}</tbody></table></div></article>)}
     </>}
   </>;
 }

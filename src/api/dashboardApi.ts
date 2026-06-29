@@ -40,9 +40,9 @@ export async function getDetailPage(
 }
 
 export async function getDashboardSection(section: string, filters: DashboardFilters) {
-  const rpc = section === 'costs' ? 'dashboard_costs' : section === 'creators' || section === 'commission' ? 'dashboard_affiliate' : 'dashboard_section';
-  const params = rpc === 'dashboard_section' ? { p_section: section, p_from: filters.from, p_to: filters.to, p_limit: 100 } : { p_from: filters.from, p_to: filters.to, p_limit: 100 };
+  const rpc=section==='customers'?'dashboard_customer_portrait':'dashboard_legacy';
+  const params=rpc==='dashboard_legacy'?{p_section:section,p_from:filters.from,p_to:filters.to,p_limit:500}:{p_from:filters.from,p_to:filters.to,p_limit:500};
   const { data, error } = await supabase.rpc(rpc, params);
   if (error) throw error;
-  return data as { rows: Array<Record<string, string | number | null>>; from: string; to: string };
+  return data as { rows: Array<Record<string, string | number | null>>; summary?: Record<string, number>; from: string; to: string };
 }

@@ -20,7 +20,7 @@ const menu: MenuGroup[] = [
   ]},
   { label: 'QUẢNG CÁO', icon: 'ads', items: [{ label: 'Tổng quan', id: 'ads' }, { label: 'Chi tiết Sản phẩm', id: 'product-ads' }, { label: 'Chi tiết Nguồn', id: 'source-ads' }] },
   { label: 'VIDEO', icon: 'video', items: [{ label: 'Tổng quan', id: 'video' }] },
-  { label: 'KOC', icon: 'video', items: [{ label: 'Nguồn doanh thu', id: 'creators' }, { label: 'Hoa hồng', id: 'commission' }, { label: 'Book KOC', id: 'booking' }] },
+  { label: 'KOC', icon: 'koc', items: [{ label: 'Nguồn doanh thu', id: 'creators' }, { label: 'Hoa hồng', id: 'commission' }, { label: 'Book KOC', id: 'booking' }] },
   { label: 'KHÁCH HÀNG', icon: 'customers', items: [{ label: 'Chân dung', id: 'customers' }] },
   { label: 'PLANNER', icon: 'planner', items: [{ label: 'Tổng quan', id: 'planner' }, { label: 'Weekly Planner', id: 'weekly' }] },
   { label: 'SHOPEE', icon: 'shopee', items: [{ label: 'Tổng quan', id: 'shopee' }, { label: 'Chi tiết Sản phẩm', id: 'shopee-products' }, { label: 'Quảng cáo', id: 'shopee-ads' }, { label: 'Lưu lượng truy cập', id: 'shopee-traffic' }] },
@@ -41,5 +41,5 @@ export default function App() {
     <div className="app-logo">MINHHIEU<small>Dashboard · AnlanhFarm</small></div><div className="menu-caption">MENU</div>
     <nav>{visibleMenu.map((group) => <section className="nav-group" key={group.label}><h3><MenuIcon name={group.icon}/>{group.label}</h3><div>{group.items.map((item) => <button className={page === item.id ? 'active' : ''} onClick={() => setPage(item.id)} key={item.id}>{item.label}</button>)}</div></section>)}</nav>
     <button className="sign-out" onClick={() => supabase.auth.signOut()}>Đăng xuất</button>
-  </aside><main className="content">{page === 'overview' ? <OverviewPage /> : page === 'import' && isStaff ? <ImportPage /> : current ? <SectionPage section={page} title={current.label}/> : null}</main></div>;
+  </aside><main className="content">{page === 'overview' ? <OverviewPage /> : page === 'import' && isStaff ? <ImportPage /> : current ? <SectionPage section={page} title={current.label} canEdit={isStaff}/> : null}</main></div>;
 }
