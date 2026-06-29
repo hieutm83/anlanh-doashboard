@@ -84,8 +84,8 @@ export function ImportPage() {
   const preview = entries[0]?.result;
   const dates = entries.map((entry) => entry.result.metricDate).filter(Boolean).sort() as string[];
 
-  return <section><header className="page-heading"><div><p>DATA PIPELINE</p><h1>Nhập dữ liệu</h1></div></header>
-    <div className="import-grid"><article className="panel"><h2>1. Chọn nguồn dữ liệu</h2>
+  return <section><header className="mb-5"><div><p className="mb-1 text-[10px] font-semibold tracking-[.16em] text-slate-400">DATA PIPELINE</p><h1 className="font-display text-2xl font-bold">Nhập dữ liệu</h1></div></header>
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(300px,.65fr)_minmax(0,1.35fr)]"><article className="panel"><h2>1. Chọn nguồn dữ liệu</h2>
       <label>Loại dữ liệu<select value={type} onChange={(event) => changeType(event.target.value as DatasetType)}><option value="orders">Tất cả đơn hàng</option><option value="sample_orders">Đơn mẫu KOC</option><option value="affiliate_orders">Đơn hàng Affiliate/KOC</option><option value="ads">Quảng cáo TikTok</option><option value="product_analysis">Phân tích sản phẩm</option></select></label>
       <label className="drop-zone">CSV, XLSX hoặc XLS {isMulti && '· chọn nhiều file'}<input type="file" multiple={isMulti} accept=".csv,.xlsx,.xls" onChange={(event) => event.target.files && parseFiles(event.target.files)} /></label>
       <p className="field-note">Ads lấy ngày từ tên “creative data for product campaigns YYYY-MM-DD 00 ~ YYYY-MM-DD 23”. Sản phẩm lấy ngày từ “product_list_YYYYMMDD”.</p><p>{status}</p>{progress > 0 && <progress value={progress} max="100" />}

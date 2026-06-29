@@ -1,4 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Barlow+Condensed:wght@600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .card { @apply min-w-0 max-w-full rounded-lg border border-[#e8e8e8] bg-white p-5 shadow-none; }
+}
 .menu-icon{width:16px;height:16px;flex:0 0 16px;color:#1768ff}.menu-icon.planner{color:#16a34a}.menu-icon.shopee{color:#ea580c}.field-note{font-size:11px;color:#778197;line-height:1.45}
 .file-list{display:grid;gap:6px;margin:0 0 12px;max-height:160px;overflow:auto}.file-list>div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:11px}.file-list span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.file-list b{font-weight:500;color:#41516a}.file-list em{font-style:normal;color:#687386}
 .date-picker{position:relative}.date-trigger{height:34px;min-width:230px;display:flex;align-items:center;gap:9px;padding:0 11px;border:1px solid #d7deea;border-radius:7px;background:#fff;color:#344055;font-size:11px;cursor:pointer}.date-trigger span{color:#1768ff}.date-trigger b{margin-left:auto;color:#8ba0bb}.date-popover{position:absolute;z-index:20;right:0;top:40px;width:230px;padding:6px 0;background:#fff;border:1px solid #dfe3e8;border-radius:8px;box-shadow:0 8px 24px #1d2a3b22}.date-popover>button{display:block;width:100%;margin:0;padding:10px 13px;border:0;border-radius:0;background:#fff;color:#57657a;text-align:left;font-size:11px;font-weight:400}.date-popover>button:hover,.date-popover>button.selected{background:#f3f7fd;color:#1768ff}.date-popover>button.custom-toggle{border-top:1px solid #e5e8ed}.custom-range{padding:10px 12px;border-top:1px solid #e5e8ed}.custom-range label{display:grid;gap:4px;margin-bottom:8px;font-size:10px;color:#687386}.custom-range input{width:100%;padding:7px;border:1px solid var(--line);border-radius:6px}.custom-range button{width:100%;padding:8px;border:0;border-radius:6px;background:#1768ff;color:#fff;font-weight:700}.section-grid{display:grid;grid-template-columns:minmax(320px,.8fr) minmax(0,1.2fr);gap:18px}.data-table{height:325px;overflow:auto}.data-table th{z-index:1}
