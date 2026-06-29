@@ -18,6 +18,7 @@ const numeric = (value: unknown) => {
 const percent = (value: unknown) => numeric(value) / (String(value ?? '').includes('%') ? 100 : 1);
 const isoDate = (value: unknown) => {
   const text = String(value ?? '').trim();
+  if (!text || text === '-' || text === '--') return null;
   let match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}):(\d{2}))?/);
   if (match) return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}T${(match[4] ?? '00').padStart(2, '0')}:${match[5] ?? '00'}:${match[6] ?? '00'}+07:00`;
   match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
