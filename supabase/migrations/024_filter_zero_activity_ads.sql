@@ -24,13 +24,13 @@ begin
   left join product_mappings pm on pm.organization_id=j.organization_id and pm.channel_id=c.id and pm.external_product_id=s.payload->>'product_external_id'
   left join inhouse_accounts ih on ih.organization_id=j.organization_id and ih.channel_id=c.id and lower(ih.account_name)=lower(s.payload->>'account_name')
   where s.import_job_id=p_job_id
-    and (coalesce((s.payload->>'spend')::numeric,0) <> 0 or coalesce((s.payload->>'orders')::numeric,0) <> 0);
+    and (coalesce((s.payload->>'spend')::numeric,0) > 0 or coalesce((s.payload->>'orders')::numeric,0) > 0);
   delete from ad_performance_daily where organization_id=j.organization_id and metric_date=any(dates);
   insert into ad_performance_daily(organization_id,channel_id,metric_date,campaign_external_id,ad_external_id,source_type,spend,revenue,orders,impressions,clicks,conversions,import_job_id)
   select organization_id,channel_id,metric_date,campaign_id,video_id,source_type,sum(spend),sum(revenue),sum(orders),sum(impressions),sum(clicks),sum(orders),p_job_id
   from tiktok_ad_records where organization_id=j.organization_id and metric_date=any(dates) group by 1,2,3,4,5,6;
   perform refresh_dashboard_dates(j.organization_id,dates);
-  update import_jobs set status='completed',completed_at=now(),valid_rows=(select count(*) from import_staging where import_job_id=p_job_id and (coalesce((payload->>'spend')::numeric,0) <> 0 or coalesce((payload->>'orders')::numeric,0) <> 0)) where id=p_job_id;
+  update import_jobs set status='completed',completed_at=now(),valid_rows=(select count(*) from import_staging where import_job_id=p_job_id and (coalesce((payload->>'spend')::numeric,0) > 0 or coalesce((payload->>'orders')::numeric,0) > 0)) where id=p_job_id;
 end $$;
 
 revoke all on function public.finalize_ads_import(uuid) from public,anon;
