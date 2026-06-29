@@ -3,17 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import type { ChartConfiguration } from 'chart.js';
 import { getOverview } from '../api/dashboardApi';
 import { KpiCard } from '../components/KpiCard';
-import { DateFilter } from '../components/DateFilter';
+import { DateFilter, defaultRange } from '../components/DateFilter';
 import { DashboardChart } from '../components/DashboardChart';
 import type { DashboardFilters } from '../types/dashboard';
 
-const today = new Date();
-const end = today.toISOString().slice(0, 10);
-const startDate = new Date(today); startDate.setDate(today.getDate() - 6);
 const common = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' as const, labels: { boxWidth: 18, font: { size: 10 } } } } };
 
 export function OverviewPage() {
-  const [filters, setFilters] = useState<DashboardFilters>({ from: startDate.toISOString().slice(0, 10), to: end, channel: 'all' });
+  const [filters, setFilters] = useState<DashboardFilters>(defaultRange);
   const query = useQuery({ queryKey: ['dashboard', 'overview', filters], queryFn: () => getOverview(filters), staleTime: 5 * 60_000 });
   const charts = useMemo(() => {
     const rows = query.data?.series ?? [];

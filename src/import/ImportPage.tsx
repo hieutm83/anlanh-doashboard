@@ -64,6 +64,17 @@ export function ImportPage() {
         setEntries([...output]);
         setStatus(`Đang đọc ${index + 1}/${files.length} file…`);
       }
+      if (isMulti) {
+        const seen = new Map<string, string>();
+        output.forEach((entry) => {
+          const date = entry.result.metricDate;
+          if (!date) return;
+          const first = seen.get(date);
+          if (first) entry.result.errors.push({ row: 1, column: 'Tên file', message: `${entry.file.name}: trùng ngày ${date} với ${first}` });
+          else seen.set(date, entry.file.name);
+        });
+        setEntries([...output]);
+      }
       const errors = output.reduce((sum, item) => sum + item.result.errors.length, 0);
       setStatus(errors ? `Đã đọc ${files.length} file, cần xử lý ${errors} lỗi.` : `${files.length} file đã sẵn sàng để import.`);
     } catch (error) { setStatus(`Lỗi: ${readableError(error)}`); }

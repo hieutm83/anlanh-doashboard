@@ -53,7 +53,8 @@ function normalizeAffiliate(raw: ImportRow) {
     product_name: String(valueOf(raw, 'Tên sản phẩm') ?? ''), sku_id: String(valueOf(raw, 'ID SKU') ?? ''), price: numeric(valueOf(raw, 'Giá')),
     payment_amount: numeric(valueOf(raw, 'Payment Amount')), quantity: numeric(valueOf(raw, 'Số lượng')), status: String(valueOf(raw, 'Trạng thái đơn hàng') ?? ''),
     creator_username: String(valueOf(raw, 'Tên người dùng nhà sáng tạo') ?? ''), content_type: String(valueOf(raw, 'Loại nội dung') ?? ''), content_id: String(valueOf(raw, 'Id nội dung') ?? ''),
-    estimated_commission_base: numeric(valueOf(raw, 'Cơ sở hoa hồng ước tính')), estimated_ad_commission: numeric(valueOf(raw, 'Thanh toán hoa hồng Quảng cáo cửa hàng ước tính')),
+    estimated_commission_base: numeric(valueOf(raw, 'Cơ sở hoa hồng ước tính')), estimated_standard_commission: numeric(valueOf(raw, 'Thanh toán hoa hồng tiêu chuẩn ước tính')),
+    actual_standard_commission: numeric(valueOf(raw, 'Thanh toán hoa hồng thực tế')), estimated_ad_commission: numeric(valueOf(raw, 'Thanh toán hoa hồng Quảng cáo cửa hàng ước tính')),
     actual_ad_commission: numeric(valueOf(raw, 'Thanh toán hoa hồng Quảng cáo cửa hàng thực tế')), created_at: isoDate(valueOf(raw, 'Thời gian đã tạo')), raw_payload: raw } as ImportRow;
 }
 

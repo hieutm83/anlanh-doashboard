@@ -38,3 +38,11 @@ export async function getDetailPage(
   if (error) throw error;
   return data as PageResult<Record<string, unknown>>;
 }
+
+export async function getDashboardSection(section: string, filters: DashboardFilters) {
+  const rpc = section === 'costs' ? 'dashboard_costs' : section === 'creators' || section === 'commission' ? 'dashboard_affiliate' : 'dashboard_section';
+  const params = rpc === 'dashboard_section' ? { p_section: section, p_from: filters.from, p_to: filters.to, p_limit: 100 } : { p_from: filters.from, p_to: filters.to, p_limit: 100 };
+  const { data, error } = await supabase.rpc(rpc, params);
+  if (error) throw error;
+  return data as { rows: Array<Record<string, string | number | null>>; from: string; to: string };
+}
