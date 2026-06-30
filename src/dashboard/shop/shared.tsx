@@ -23,7 +23,7 @@ export function useShopTraffic(mode: 'products'|'sources') {
   const [filters,setFilters]=useState(defaultRange);
   const query=useQuery({queryKey:['shop-traffic',filters.from,filters.to],queryFn:()=>getShopProductTraffic(filters),staleTime:5*60_000});
   const rows=useMemo<ShopRow[]>(()=>{const raw=query.data?.rows??[];const metrics=mode==='products'?aggregateProducts(raw):aggregateSources(raw);return metrics.map(row=>({...row,revenue:row.gmv,quantity:row.sales}));},[query.data,mode]);
-  return {filters,setFilters,query,rows,summary:{}};
+  return {filters,setFilters,query,rows,rawProducts:query.data?.rows??[],summary:{}};
 }
 
 type ShopQueryState = { filters:DashboardFilters; setFilters:Dispatch<SetStateAction<DashboardFilters>>; query:{refetch:()=>unknown;isLoading:boolean;error:Error|null} };

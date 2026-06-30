@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import type { ChartConfiguration } from 'chart.js';
 import { DashboardChart } from '../../components/DashboardChart';
 import { EmptyRow, formatMoney, formatNumber, ShopHeader, ShopState, total, useShopChart, useShopTraffic, type ShopMetric, type ShopRow } from './shared';
+import { aggregateSourcesByDate } from './shopMetrics';
 
 export function ShopSourceDetails() {
-  const state=useShopTraffic('sources'); const {rows}=state; const [metric,setMetric]=useState<ShopMetric>('revenue'); const [detail,setDetail]=useState<ShopRow|null>(null);
-  const pie=useShopChart(rows,'Cơ cấu GMV','revenue','doughnut'); const combo=useShopChart(rows,'GMV','revenue','bar','orders'); const trend=useShopChart(rows,metric,metric,'line');
+  const state=useShopTraffic('sources'); const {rows}=state; const visibleRows=rows.filter(row=>row.key!=='shopTab'); const [metric,setMetric]=useState<ShopMetric>('revenue'); const [detail,setDetail]=useState<ShopRow|null>(null);
+  const pie=useShopChart(visibleRows,'Cơ cấu GMV','revenue','doughnut'); const trend=useShopChart(rows,metric,metric,'line');
+  const daily=useMemo(()=>aggregateSourcesByDate(state.rawProducts),[state.rawProducts]);
+  const combo=useMemo<ChartConfiguration>(()=>{const visibleKeys=['sellerLive','sellerVideo','affiliate','card'] as const;const colors={sellerLive:'#ec4899',sellerVideo:'#3b82f6',affiliate:'#8b5cf6',card:'#f59e0b'};const labels=daily.map(day=>{const [year,month,date]=day.date.split('-');return year?`${date}/${month}`:day.date});return {type:'bar',data:{labels,datasets:[...visibleKeys.map(key=>({type:'bar' as const,label:daily[0]?.sources.find(source=>source.key===key)?.label??key,data:daily.map(day=>day.sources.find(source=>source.key===key)?.gmv??0),backgroundColor:colors[key],stack:'gmv',yAxisID:'y'})),{type:'line' as const,label:'CTR (%)',data:daily.map(day=>day.total.ctr*100),borderColor:'#10b981',backgroundColor:'#10b981',yAxisID:'y1',tension:.3,pointRadius:3},{type:'line' as const,label:'CTOR (%)',data:daily.map(day=>day.total.ctor*100),borderColor:'#ef4444',backgroundColor:'#ef4444',borderDash:[4,3],yAxisID:'y1',tension:.3,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:9}}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,grid:{color:'#edf0f4'}},y1:{beginAtZero:true,position:'right',grid:{display:false},ticks:{callback:value=>`${value}%`}}}}} as ChartConfiguration;},[daily]);
   const sums={revenue:total(rows,'revenue'),orders:total(rows,'orders'),sales:total(rows,'sales'),customers:total(rows,'customers'),impressions:total(rows,'impressions'),clicks:total(rows,'clicks'),atc:total(rows,'atc')};
   const kpis=[['Tổng GMV',formatMoney(sums.revenue),'text-emerald-600'],['Đơn hàng',formatNumber(sums.orders),'text-blue-600'],['Số món',formatNumber(sums.sales),'text-indigo-600'],['Khách hàng',formatNumber(sums.customers),'text-violet-600'],['Hiển thị',formatNumber(sums.impressions),'text-slate-600'],['Lượt nhấp',formatNumber(sums.clicks),'text-sky-600'],['Thêm giỏ',formatNumber(sums.atc),'text-orange-600'],['CTR',`${formatNumber(sums.impressions?sums.clicks*100/sums.impressions:0)}%`,'text-teal-600']];
   return <><ShopHeader title="Chi tiết Nguồn" state={state}/><ShopState state={state}>

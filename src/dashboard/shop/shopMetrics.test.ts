@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aggregateProducts, aggregateSources, parseMetric, safeRatio, type RawProduct } from './shopMetrics';
+import { aggregateProducts, aggregateSources, aggregateSourcesByDate, parseMetric, safeRatio, type RawProduct } from './shopMetrics';
 
 const product: RawProduct = { date:'2026-06-29',productId:'p1',productName:'Sản phẩm A',rawPayload:{
   'Buổi LIVE của người bán > GMV đã ghi nhận':'1.000.000₫','Buổi LIVE của người bán > Đơn hàng đã ghi nhận':'10','Buổi LIVE của người bán > Số món bán ra đã ghi nhận':'12',
@@ -13,4 +13,6 @@ describe('shop traffic metrics',()=>{
   it('uses safe ratios',()=>{expect(safeRatio(1,0)).toBe(0);expect(safeRatio(50,200)).toBe(.25);});
   it('aggregates traffic by source without using sales as ATC',()=>{const live=aggregateSources([product]).find(x=>x.key==='sellerLive')!;expect(live.impressions).toBe(2000);expect(live.clicks).toBe(200);expect(live.atc).toBe(50);expect(live.sales).toBe(12);expect(live.ctr).toBe(.1);expect(live.ctor).toBe(.25);expect(live.conversionRate).toBe(.05);expect(live.cartToOrderRate).toBe(.2);});
   it('rolls source traffic into product totals',()=>{const row=aggregateProducts([product])[0];expect(row.gmv).toBe(1500000);expect(row.impressions).toBe(3000);expect(row.clicks).toBe(300);expect(row.atc).toBe(70);expect(row.sales).toBe(18);expect(row.ctr).toBe(.1);});
+  it('uses exact fields and derives missing ATC from CTOR',()=>{const tricky:RawProduct={...product,rawPayload:{'Buổi LIVE của người bán > Đơn hàng đã ghi nhận':'10','Buổi LIVE của người bán > Chi phí cho mỗi đơn hàng':'319,2','Buổi LIVE của người bán > Lượt nhấp vào sản phẩm':'200','Buổi LIVE của người bán > CTOR (Đơn hàng SKU)':'25%'}};const live=aggregateSources([tricky]).find(x=>x.key==='sellerLive')!;expect(live.orders).toBe(10);expect(live.atc).toBe(50);});
+  it('aggregates chart data by day and excludes shopTab from totals',()=>{const days=aggregateSourcesByDate([product,{...product,date:'2026-06-30'}]);expect(days).toHaveLength(2);expect(days[0].total.gmv).toBe(1500000);expect(days[0].total.ctr).toBe(.1);});
 });
