@@ -8,21 +8,23 @@ import { VietnamGeoMap } from '../components/VietnamGeoMap';
 import { legacySpecs, type MetricKey } from './legacyDashboardSpecs';
 import { exportJson, exportMarkdown } from '../export/download';
 import { OperationsEditor } from './OperationsEditor';
+import { aov, cpa, ctrPercent, roi } from './metrics';
 
 type Row = Record<string, string | number | null>;
 const number = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
 const money = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
-const columnLabels: Record<string,string> = { label:'Tên/Nhóm',revenue:'Doanh thu',orders:'Đơn hàng',spend:'Chi phí/Hoa hồng',quantity:'Số lượng',customers:'Khách hàng',impressions:'Hiển thị',clicks:'Lượt nhấp',province:'Tỉnh/Thành',date:'Ngày',status:'Trạng thái',priority:'Ưu tiên' };
-const currencyColumns = new Set(['revenue','spend']);
+const columnLabels: Record<string,string> = { label:'Tên/Nhóm',revenue:'Doanh thu',orders:'Đơn hàng',spend:'Tổng hoa hồng',quantity:'Số lượng',customers:'Khách hàng',impressions:'Hiển thị/Lượt xem',clicks:'Lượt nhấp',atc:'Thêm giỏ',checkout:'Thanh toán',buyers:'Người mua',cancelled_orders:'Đơn hủy',score:'Điểm hiệu suất',overdue:'Quá hạn',videos:'Video',standard_commission:'Hoa hồng tự nhiên',ad_commission:'Hoa hồng Ads',commission_rate:'Tỷ lệ hoa hồng',source_type:'Nhóm',view_2s_rate:'Xem 2s',view_6s_rate:'Xem 6s',view_25_rate:'Xem 25%',view_50_rate:'Xem 50%',view_75_rate:'Xem 75%',view_100_rate:'Xem 100%',province:'Tỉnh/Thành',date:'Ngày',status:'Trạng thái',priority:'Ưu tiên' };
+const currencyColumns = new Set(['revenue','spend','standard_commission','ad_commission']);
+const percentColumns = new Set(['commission_rate','view_2s_rate','view_6s_rate','view_25_rate','view_50_rate','view_75_rate','view_100_rate']);
 const palette = ['#347ff0','#00b982','#8150ee','#ff963c','#ff5b7d','#45b8ad','#aeb4bb','#f5bd3d','#168dd1','#8653e7'];
 
 const sum = (rows: Row[], key: MetricKey) => rows.reduce((total,row) => total + Number(row[key] ?? 0),0);
 function kpiValue(rows: Row[], summary: Record<string,number>, metric: MetricKey, ratio?: 'roi'|'cpa'|'aov'|'ctr') {
   const get=(key:MetricKey)=>Number(summary[key]??sum(rows,key)); const value=get(metric); if(!ratio) return value;
-  if(ratio==='roi') return get('spend') ? get('revenue')/get('spend') : 0;
-  if(ratio==='cpa') return get('orders') ? get('spend')/get('orders') : 0;
-  if(ratio==='aov') return get('orders') ? get('revenue')/get('orders') : 0;
-  return get('impressions') ? get('clicks')*100/get('impressions') : 0;
+  if(ratio==='roi') return roi(get('revenue'),get('spend'));
+  if(ratio==='cpa') return cpa(get('spend'),get('orders'));
+  if(ratio==='aov') return aov(get('revenue'),get('orders'));
+  return ctrPercent(get('clicks'),get('impressions'));
 }
 function chartConfig(rows: Row[], item: { title:string; metric:MetricKey; secondary?:MetricKey; type?:'bar'|'line'|'doughnut' }): ChartConfiguration {
   const source=rows.length ? rows.slice(0,10) : [{label:'Chưa có dữ liệu'}]; const labels=source.map(row=>String(row.label ?? row.date ?? 'Khác'));
@@ -43,7 +45,7 @@ export function SectionPage({ section, title, canEdit=false }: { section:string;
     {!query.isLoading&&!query.error&&<>
       {spec.kpis.length>0&&<section className={`mb-5 grid grid-cols-2 gap-3 md:grid-cols-4 ${spec.kpis.length>8?'xl:grid-cols-5':'xl:grid-cols-4'}`}>{spec.kpis.map((item,index)=>{const value=kpiValue(rows,summary,item.metric,item.ratio);return <article className="legacy-kpi" key={`${item.label}-${index}`}><span>{item.label}</span><strong>{item.currency?`${money.format(value)} ₫`:item.ratio==='ctr'?`${number.format(value)}%`:number.format(value)}</strong><small>{rows.length?`Từ ${rows.length} nhóm dữ liệu`:'Chưa có dữ liệu'}</small></article>})}</section>}
       {spec.charts.length>0&&<section className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">{spec.charts.map((item,index)=><article className="card" key={`${item.title}-${index}`}><h2 className="mb-4 text-xs font-bold text-slate-700">{item.title}</h2><div className="legacy-chart-wrap">{item.title.includes('Bản đồ')?<VietnamGeoMap rows={rows}/>:<DashboardChart config={charts[index]}/>}</div></article>)}</section>}
-      {spec.tables.map((table,index)=><article className="card mb-5" key={`${table.title}-${index}`}><h2 className="mb-4 text-sm font-bold">{table.title}</h2><div className="legacy-table-scroll"><table><thead><tr>{table.columns.map(column=><th key={column}>{columnLabels[column]??column}</th>)}<th>Chi tiết</th></tr></thead><tbody>{rows.length?rows.slice(0,100).map((row,rowIndex)=><tr key={rowIndex}>{table.columns.map(column=><td key={column}>{currencyColumns.has(column)?`${money.format(Number(row[column]??0))} ₫`:typeof row[column]==='number'?number.format(Number(row[column])):String(row[column]??'—')}</td>)}<td><button className="detail-button" onClick={()=>setDetail(row)}>Xem</button></td></tr>):<tr><td colSpan={table.columns.length+1} className="empty-cell">Không có dữ liệu trong khoảng thời gian đã chọn</td></tr>}</tbody></table></div></article>)}
+      {spec.tables.map((table,index)=><article className="card mb-5" key={`${table.title}-${index}`}><h2 className="mb-4 text-sm font-bold">{table.title}</h2><div className="legacy-table-scroll"><table><thead><tr>{table.columns.map(column=><th key={column}>{columnLabels[column]??column}</th>)}<th>Chi tiết</th></tr></thead><tbody>{rows.length?rows.slice(0,100).map((row,rowIndex)=><tr key={rowIndex}>{table.columns.map(column=><td key={column}>{currencyColumns.has(column)?`${money.format(Number(row[column]??0))} ₫`:percentColumns.has(column)?`${number.format(Number(row[column]??0)*100)}%`:typeof row[column]==='number'?number.format(Number(row[column])):String(row[column]??'—')}</td>)}<td><button className="detail-button" onClick={()=>setDetail(row)}>Xem</button></td></tr>):<tr><td colSpan={table.columns.length+1} className="empty-cell">Không có dữ liệu trong khoảng thời gian đã chọn</td></tr>}</tbody></table></div></article>)}
     </>}
     {detail&&<div className="legacy-modal" onClick={()=>setDetail(null)}><article onClick={event=>event.stopPropagation()}><header><h2>Chi tiết: {String(detail.label??'Dữ liệu')}</h2><button onClick={()=>setDetail(null)}>×</button></header><div className="detail-grid">{Object.entries(detail).map(([key,value])=><div key={key}><span>{columnLabels[key]??key}</span><b>{String(value??'—')}</b></div>)}</div></article></div>}
   </>;

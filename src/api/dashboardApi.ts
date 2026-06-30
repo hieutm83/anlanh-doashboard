@@ -40,9 +40,16 @@ export async function getDetailPage(
 }
 
 export async function getDashboardSection(section: string, filters: DashboardFilters) {
-  const rpc=section==='customers'?'dashboard_customer_portrait':'dashboard_legacy';
-  const params=rpc==='dashboard_legacy'?{p_section:section,p_from:filters.from,p_to:filters.to,p_limit:500}:{p_from:filters.from,p_to:filters.to,p_limit:500};
+  const deepSections=new Set(['ads','product-ads','source-ads','video','creators','commission','booking','planner','weekly','shopee','shopee-products','shopee-ads','shopee-traffic']);
+  const rpc=section==='customers'?'dashboard_customer_portrait':deepSections.has(section)?'dashboard_deep_metrics':'dashboard_legacy';
+  const params=rpc==='dashboard_customer_portrait'?{p_from:filters.from,p_to:filters.to,p_limit:500}:{p_section:section,p_from:filters.from,p_to:filters.to,p_limit:500};
   const { data, error } = await supabase.rpc(rpc, params);
   if (error) throw error;
   return data as { rows: Array<Record<string, string | number | null>>; summary?: Record<string, number>; from: string; to: string };
+}
+
+export async function getShopProductTraffic(filters: DashboardFilters) {
+  const { data, error } = await supabase.rpc('dashboard_shop_product_traffic', { p_from: filters.from, p_to: filters.to, p_limit: 20_000 });
+  if (error) throw error;
+  return data as { rows: Array<{ date: string; productId: string; productName: string; rawPayload: Record<string, unknown> }>; from: string; to: string };
 }

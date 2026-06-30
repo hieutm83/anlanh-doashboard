@@ -1,4 +1,4 @@
-export type MetricKey = 'revenue' | 'orders' | 'spend' | 'quantity' | 'customers' | 'impressions' | 'clicks';
+export type MetricKey = 'revenue'|'orders'|'spend'|'quantity'|'customers'|'impressions'|'clicks'|'atc'|'checkout'|'buyers'|'cancelled_orders'|'score'|'overdue'|'videos'|'standard_commission'|'ad_commission';
 export type LegacySpec = {
   kpis: Array<{ label: string; metric: MetricKey; currency?: boolean; ratio?: 'roi' | 'cpa' | 'aov' | 'ctr' }>;
   charts: Array<{ title: string; metric: MetricKey; secondary?: MetricKey; type?: 'bar' | 'line' | 'doughnut' }>;
@@ -42,7 +42,7 @@ export const legacySpecs: Record<string, LegacySpec> = {
   video: {
     kpis:[{label:'Tổng Video',metric:'quantity'},{label:'Video có đơn',metric:'orders'},{label:'Tổng GMV',metric:'revenue',currency:true},{label:'Tổng đơn',metric:'orders'},{label:'Tổng chi phí',metric:'spend',currency:true},{label:'ROI',metric:'revenue',ratio:'roi'},{label:'Lượt hiển thị',metric:'impressions'},{label:'Lượt nhấp',metric:'clicks'},{label:'CTR',metric:'clicks',ratio:'ctr'},{label:'CPA',metric:'spend',ratio:'cpa',currency:true},{label:'GMV / Video',metric:'revenue',currency:true},{label:'Đơn / Video',metric:'orders'}],
     charts:[{title:'Doanh số theo video',metric:'revenue',type:'doughnut'},{title:'Số lượng video và đơn theo thời gian',metric:'quantity',secondary:'orders'}],
-    tables:[{title:'Chi tiết theo video',columns:adColumns},{title:'Chi tiết video',columns:adColumns}],
+    tables:[{title:'Chi tiết theo video',columns:[...adColumns,'source_type','view_2s_rate','view_6s_rate','view_25_rate','view_50_rate','view_75_rate','view_100_rate']}],
   },
   creators: {
     kpis:[{label:'Creators',metric:'quantity'},{label:'Đơn hàng',metric:'orders'},{label:'GMV',metric:'revenue',currency:true}],charts:[],
@@ -50,7 +50,7 @@ export const legacySpecs: Record<string, LegacySpec> = {
   },
   commission: {
     kpis:[{label:'Tổng GMV KOC',metric:'revenue',currency:true},{label:'Tổng đơn',metric:'orders'},{label:'Hoa hồng',metric:'spend',currency:true},{label:'Tỷ lệ hoa hồng',metric:'spend'}],
-    charts:[{title:'Thống kê hoa hồng ADS và Tự nhiên',metric:'spend',secondary:'revenue'}],tables:[{title:'Creator · Hoa hồng ADS và Tự nhiên',columns:['label','revenue','orders','spend']},{title:'Chi tiết đóng góp Video',columns:['label','revenue','orders','quantity','spend']}],
+    charts:[{title:'Thống kê hoa hồng ADS và Tự nhiên',metric:'standard_commission',secondary:'ad_commission'}],tables:[{title:'Creator · Hoa hồng ADS và Tự nhiên',columns:['label','revenue','orders','standard_commission','ad_commission','spend','commission_rate']}],
   },
   booking: {
     kpis:[{label:'Tổng KOC',metric:'quantity'},{label:'Đã chốt',metric:'orders'},{label:'Chờ xử lý',metric:'customers'},{label:'Đơn Book',metric:'orders'},{label:'Video đăng',metric:'quantity'},{label:'Tổng chi phí',metric:'spend',currency:true}],
@@ -62,11 +62,11 @@ export const legacySpecs: Record<string, LegacySpec> = {
     charts:[{title:'Tần suất mua hàng theo Ngày và Giờ',metric:'orders'},{title:'Phân bố địa lý (Bản đồ)',metric:'revenue',type:'doughnut'}],tables:[{title:'Chi tiết Tỉnh/Thành',columns:['province','label','orders','revenue']}],
   },
   planner: {
-    kpis:[{label:'Công việc đã thêm',metric:'quantity'},{label:'Đã hoàn thành',metric:'orders'},{label:'Điểm hiệu suất',metric:'customers'},{label:'Tỷ lệ hoàn thành',metric:'orders'}],
+    kpis:[{label:'Công việc đã thêm',metric:'quantity'},{label:'Đã hoàn thành',metric:'orders'},{label:'Điểm hiệu suất',metric:'score'},{label:'Quá hạn',metric:'overdue'}],
     charts:[{title:'Tỉ lệ hoàn thành công việc theo ngày',metric:'orders',type:'line'},{title:'Số lượng công việc theo ngày',metric:'quantity'}],tables:[{title:'Lịch hoàn thành công việc',columns:['date','label','status','priority']}],
   },
   weekly: {
-    kpis:[{label:'Tổng nhiệm vụ',metric:'quantity'},{label:'Hoàn thành',metric:'orders'},{label:'Đang làm',metric:'customers'},{label:'Tiến độ',metric:'orders'}],
+    kpis:[{label:'Tổng nhiệm vụ',metric:'quantity'},{label:'Hoàn thành',metric:'orders'},{label:'Đang làm',metric:'customers'},{label:'Điểm hiệu suất',metric:'score'}],
     charts:[{title:'Hoàn thành công việc',metric:'orders',type:'doughnut'},{title:'Nhiệm vụ theo ngày',metric:'quantity'}],tables:[{title:'LỊCH BIỂU CÔNG VIỆC',columns:['date','label','status','priority']},{title:'Thói quen',columns:['label','status','date']},{title:'Công việc trong ngày',columns:['label','status','priority']}],
   },
   shopee: {
@@ -81,6 +81,6 @@ export const legacySpecs: Record<string, LegacySpec> = {
   },
   'shopee-traffic': {
     kpis:[{label:'Lượt hiển thị sản phẩm',metric:'impressions'},{label:'Lượt nhấp vào sản phẩm',metric:'clicks'},{label:'Số khách truy cập',metric:'customers'},{label:'Lượt xem trang',metric:'impressions'},{label:'CTR',metric:'clicks',ratio:'ctr'},{label:'Tỷ lệ chuyển đổi',metric:'orders'},{label:'Doanh số',metric:'revenue',currency:true},{label:'Đơn hàng',metric:'orders'},{label:'Sản phẩm',metric:'quantity'},{label:'Người mua',metric:'customers'}],
-    charts:[{title:'Tổng quan lưu lượng',metric:'impressions',secondary:'clicks'},{title:'Nguồn lưu lượng truy cập',metric:'revenue',type:'doughnut'}],tables:[{title:'Nguồn lưu lượng của tất cả nguồn',columns:['label','impressions','clicks','orders','revenue']},{title:'Nguồn lưu lượng theo sản phẩm',columns:['label','impressions','clicks','orders','revenue']},{title:'Chi tiết doanh số',columns:revenueColumns}],
+    charts:[{title:'Tổng quan lưu lượng',metric:'impressions',secondary:'customers'},{title:'Nguồn lưu lượng truy cập',metric:'revenue',type:'doughnut'}],tables:[{title:'Phễu lưu lượng theo nguồn',columns:['label','customers','impressions','atc','checkout','buyers','orders','revenue']}],
   },
 };
