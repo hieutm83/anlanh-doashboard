@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { ChartConfiguration, ChartType } from 'chart.js';
 import { getDashboardSection } from '../api/dashboardApi';
-import { DateFilter, defaultRange } from '../components/DateFilter';
+import { DateFilter } from '../components/DateFilter';
+import { useGlobalDateFilter } from '../app/DateFilterContext';
 import { DashboardChart } from '../components/DashboardChart';
 import { VietnamGeoMap } from '../components/VietnamGeoMap';
 import { legacySpecs, type MetricKey } from './legacyDashboardSpecs';
@@ -36,7 +37,7 @@ function chartConfig(rows: Row[], item: { title:string; metric:MetricKey; second
 }
 
 export function SectionPage({ section, title, canEdit=false }: { section:string; title:string; canEdit?:boolean }) {
-  const spec=legacySpecs[section]; const [filters,setFilters]=useState(defaultRange); const [detail,setDetail]=useState<Row|null>(null);
+  const spec=legacySpecs[section]; const {filters,setFilters}=useGlobalDateFilter(); const [detail,setDetail]=useState<Row|null>(null);
   const query=useQuery({queryKey:['dashboard',section,filters.from,filters.to],queryFn:()=>getDashboardSection(section,filters),staleTime:5*60_000});
   const rows=query.data?.rows??[]; const summary=query.data?.summary??{}; const charts=useMemo(()=>spec?.charts.map(item=>chartConfig(rows,item))??[],[rows,spec]);
   if(!spec) return <div className="state error">Chưa định nghĩa dashboard: {section}</div>;

@@ -1,9 +1,10 @@
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { ChartConfiguration, ChartType } from 'chart.js';
 import { getDashboardSection, getShopProductTraffic } from '../../api/dashboardApi';
 import { aggregateProducts, aggregateSources } from './shopMetrics';
-import { DateFilter, defaultRange } from '../../components/DateFilter';
+import { DateFilter } from '../../components/DateFilter';
+import { useGlobalDateFilter } from '../../app/DateFilterContext';
 import type { DashboardFilters } from '../../types/dashboard';
 
 export type ShopRow = Record<string, string | number | null>;
@@ -14,13 +15,13 @@ export const total = (rows: ShopRow[], key: ShopMetric) => rows.reduce((sum, row
 const palette = ['#347ff0','#00b982','#8150ee','#ff963c','#ff5b7d','#45b8ad','#f5bd3d','#168dd1','#8653e7','#aeb4bb'];
 
 export function useShopSection(section: string) {
-  const [filters, setFilters] = useState(defaultRange);
+  const {filters,setFilters}=useGlobalDateFilter();
   const query = useQuery({ queryKey: ['dashboard', section, filters.from, filters.to], queryFn: () => getDashboardSection(section, filters), staleTime: 5 * 60_000 });
   return { filters, setFilters, query, rows: query.data?.rows ?? [], summary: query.data?.summary ?? {} };
 }
 
 export function useShopTraffic(mode: 'products'|'sources') {
-  const [filters,setFilters]=useState(defaultRange);
+  const {filters,setFilters}=useGlobalDateFilter();
   const query=useQuery({queryKey:['shop-traffic',filters.from,filters.to],queryFn:()=>getShopProductTraffic(filters),staleTime:5*60_000});
   const rows=useMemo<ShopRow[]>(()=>{const raw=query.data?.rows??[];const metrics=mode==='products'?aggregateProducts(raw):aggregateSources(raw);return metrics.map(row=>({...row,revenue:row.gmv,quantity:row.sales}));},[query.data,mode]);
   return {filters,setFilters,query,rows,rawProducts:query.data?.rows??[],summary:{}};

@@ -1,6 +1,7 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import type { DatasetType, ImportRow, ParseResult } from '../types';
+import { parseLocalizedNumber, parseMoney } from '../numberParser';
 
 const normalizedKey = (value: unknown) => String(value ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const valueOf = (row: ImportRow, ...names: string[]) => {
@@ -14,13 +15,7 @@ const valueOf = (row: ImportRow, ...names: string[]) => {
   return null;
 };
 const columnValue = (row: ImportRow, zeroBasedIndex: number) => Object.values(row)[zeroBasedIndex] ?? null;
-const numeric = (value: unknown) => {
-  const text = String(value ?? '').trim().replace(/₫/g, '').replace(/\s/g, '');
-  if (!text) return 0;
-  const normalized = text.includes(',') && text.includes('.') ? text.replace(/\./g, '').replace(',', '.') : text.replace(/,/g, '.').replace(/[^0-9.-]/g, '');
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
+const numeric = parseLocalizedNumber;
 const percent = (value: unknown) => numeric(value) / (String(value ?? '').includes('%') ? 100 : 1);
 const isoDate = (value: unknown) => {
   const text = String(value ?? '').trim();
@@ -46,8 +41,8 @@ const matrixRows = (matrix: unknown[][], headerIndex = 0) => {
 
 function normalizeOrder(raw: ImportRow) {
   const status = String(valueOf(raw, 'Order Status', 'Trạng thái đơn hàng') ?? '');
-  const original = numeric(valueOf(raw, 'SKU Unit Original Price'));
-  const sellerDiscount = numeric(valueOf(raw, 'SKU Seller Discount'));
+  const original = parseMoney(valueOf(raw, 'SKU Unit Original Price'));
+  const sellerDiscount = parseMoney(valueOf(raw, 'SKU Seller Discount'));
   return { ...raw, order_id: String(valueOf(raw, 'Order ID', 'ID đơn hàng') ?? '').replace(/[^a-zA-Z0-9]/g, ''), ordered_at: isoDate(valueOf(raw, 'Created Time', 'Thời gian đã tạo')), status,
     is_cancelled: /hủy|huỷ|cancel/i.test(status), customer_name: String(valueOf(raw, 'Buyer Username') ?? ''), province: String(valueOf(raw, 'Province') ?? ''),
     sku_id: String(valueOf(raw, 'SKU ID', 'ID SKU') ?? ''), seller_sku: String(valueOf(raw, 'Seller SKU') ?? ''), product_name: String(valueOf(raw, 'Product Name', 'Tên sản phẩm') ?? ''),
@@ -57,22 +52,22 @@ function normalizeOrder(raw: ImportRow) {
 
 function normalizeAffiliate(raw: ImportRow) {
   return { ...raw, order_id: String(valueOf(raw, 'ID đơn hàng') ?? '').replace(/[^a-zA-Z0-9]/g, ''), product_external_id: String(valueOf(raw, 'ID sản phẩm') ?? ''),
-    product_name: String(valueOf(raw, 'Tên sản phẩm') ?? ''), sku_id: String(valueOf(raw, 'ID SKU') ?? ''), price: numeric(valueOf(raw, 'Giá')),
-    payment_amount: numeric(valueOf(raw, 'Payment Amount')), quantity: numeric(valueOf(raw, 'Số lượng')), status: String(valueOf(raw, 'Trạng thái đơn hàng') ?? ''),
+    product_name: String(valueOf(raw, 'Tên sản phẩm') ?? ''), sku_id: String(valueOf(raw, 'ID SKU') ?? ''), price: parseMoney(valueOf(raw, 'Giá')),
+    payment_amount: parseMoney(valueOf(raw, 'Payment Amount')), quantity: numeric(valueOf(raw, 'Số lượng')), status: String(valueOf(raw, 'Trạng thái đơn hàng') ?? ''),
     creator_username: String(valueOf(raw, 'Tên người dùng nhà sáng tạo') ?? ''), content_type: String(valueOf(raw, 'Loại nội dung') ?? ''), content_id: String(valueOf(raw, 'Id nội dung') ?? ''),
-    estimated_commission_base: numeric(valueOf(raw, 'Cơ sở hoa hồng ước tính')), estimated_standard_commission: numeric(valueOf(raw, 'Thanh toán hoa hồng tiêu chuẩn ước tính')),
-    actual_standard_commission: numeric(valueOf(raw, 'Thanh toán hoa hồng thực tế')), estimated_ad_commission: numeric(valueOf(raw, 'Thanh toán hoa hồng Quảng cáo cửa hàng ước tính')),
-    actual_ad_commission: numeric(valueOf(raw, 'Thanh toán hoa hồng Quảng cáo cửa hàng thực tế')), created_at: isoDate(valueOf(raw, 'Thời gian đã tạo')), raw_payload: raw } as ImportRow;
+    estimated_commission_base: parseMoney(valueOf(raw, 'Cơ sở hoa hồng ước tính')), estimated_standard_commission: parseMoney(valueOf(raw, 'Thanh toán hoa hồng tiêu chuẩn ước tính')),
+    actual_standard_commission: parseMoney(valueOf(raw, 'Thanh toán hoa hồng thực tế')), estimated_ad_commission: parseMoney(valueOf(raw, 'Thanh toán hoa hồng Quảng cáo cửa hàng ước tính')),
+    actual_ad_commission: parseMoney(valueOf(raw, 'Thanh toán hoa hồng Quảng cáo cửa hàng thực tế')), created_at: isoDate(valueOf(raw, 'Thời gian đã tạo')), raw_payload: raw } as ImportRow;
 }
 
 function normalizeAd(raw: ImportRow, metricDate: string) {
-  const spend = numeric(columnValue(raw, 10));
+  const spend = parseMoney(columnValue(raw, 10));
   const orders = numeric(columnValue(raw, 11));
   return { ...raw, metric_date: metricDate, campaign_name: String(valueOf(raw, 'Tên chiến dịch') ?? ''), campaign_id: String(valueOf(raw, 'ID chiến dịch') ?? ''),
     product_external_id: String(valueOf(raw, 'ID sản phẩm') ?? ''), creative_type: String(valueOf(raw, 'Loại nội dung sáng tạo') ?? ''), video_title: String(valueOf(raw, 'Tiêu đề video') ?? ''),
     video_id: String(valueOf(raw, 'ID video') ?? ''), account_name: String(valueOf(raw, 'Tài khoản TikTok') ?? ''), posted_at: isoDate(valueOf(raw, 'Thời gian đăng')),
     status: String(valueOf(raw, 'Trạng thái') ?? ''), authorization_type: String(valueOf(raw, 'Loại ủy quyền') ?? ''), spend,
-    orders, cpa: numeric(valueOf(raw, 'Chi phí cho mỗi đơn hàng')), revenue: numeric(valueOf(raw, 'Doanh thu gộp')), roi: numeric(valueOf(raw, 'ROI')),
+    orders, cpa: parseMoney(valueOf(raw, 'Chi phí cho mỗi đơn hàng')), revenue: parseMoney(valueOf(raw, 'Doanh thu gộp')), roi: numeric(valueOf(raw, 'ROI')),
     impressions: numeric(valueOf(raw, 'Số lượt hiển thị quảng cáo sản phẩm')), clicks: numeric(valueOf(raw, 'Số lượt nhấp vào quảng cáo sản phẩm')),
     ctr: percent(valueOf(raw, 'Tỷ lệ nhấp vào quảng cáo sản phẩm')), conversion_rate: percent(valueOf(raw, 'Tỷ lệ chuyển đổi quảng cáo')),
     view_2s_rate: percent(valueOf(raw, 'Tỷ lệ xem video quảng cáo trong 2 giây')), view_6s_rate: percent(valueOf(raw, 'Tỷ lệ xem video quảng cáo trong 6 giây')),

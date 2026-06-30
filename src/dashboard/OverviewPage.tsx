@@ -1,16 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { ChartConfiguration } from 'chart.js';
 import { getDashboardSection, getOverview } from '../api/dashboardApi';
 import { KpiCard } from '../components/KpiCard';
-import { DateFilter, defaultRange } from '../components/DateFilter';
+import { DateFilter } from '../components/DateFilter';
+import { useGlobalDateFilter } from '../app/DateFilterContext';
 import { DashboardChart } from '../components/DashboardChart';
-import type { DashboardFilters } from '../types/dashboard';
 
 const common = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' as const, labels: { boxWidth: 18, font: { size: 10 } } } } };
 
 export function OverviewPage() {
-  const [filters, setFilters] = useState<DashboardFilters>(defaultRange);
+  const {filters,setFilters}=useGlobalDateFilter();
   const query = useQuery({ queryKey: ['dashboard', 'overview', filters], queryFn: () => getOverview(filters), staleTime: 5 * 60_000 });
   const products = useQuery({ queryKey: ['dashboard', 'overview-products', filters], queryFn: () => getDashboardSection('products', filters), staleTime: 5 * 60_000 });
   const charts = useMemo(() => {
