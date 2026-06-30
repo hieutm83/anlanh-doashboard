@@ -5,7 +5,7 @@ const iso = (date: Date) => date.toISOString().slice(0, 10);
 const display = (value: string) => value.split('-').reverse().join('/');
 
 function preset(days: number) {
-  const to = new Date(); const from = new Date(); from.setDate(to.getDate() - days + 1);
+  const to = new Date(); to.setDate(to.getDate() - 1); const from = new Date(to); from.setDate(to.getDate() - days + 1);
   return { from: iso(from), to: iso(to) };
 }
 function yesterday() { const date = new Date(); date.setDate(date.getDate() - 1); return { from: iso(date), to: iso(date) }; }
