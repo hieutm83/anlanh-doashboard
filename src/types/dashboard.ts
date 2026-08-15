@@ -16,6 +16,7 @@ export interface OverviewResult {
   repeatRate: KpiValue;
   series: Array<{ date: string; revenue: number; orders: number; cancelledOrders?: number; adSpend: number; newCustomers?: number; repeatCustomers?: number }>;
   provinces?: Array<{ name: string; revenue: number }>;
+  costBreakdown?: Array<{ label: string; value: number }>;
 }
 
 export interface PageResult<T> {
