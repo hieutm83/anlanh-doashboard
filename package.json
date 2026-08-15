@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:cloudflare": "tsc -b && vite build",
+    "deploy:cloudflare": "npm run build:cloudflare && npx wrangler deploy",
     "preview": "vite preview",
     "test": "vitest run"
   },
